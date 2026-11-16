@@ -1,0 +1,59 @@
+name: Build APK and AAB
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Android platform files banao
+        run: |
+          flutter create --platforms=android --project-name video_call_test --org com.videotest .
+          rm -rf test
+
+      - name: Manifest me permissions lagao
+        run: python3 tools/patch_android.py
+
+      - name: Packages
+        run: flutter pub get
+
+      - name: Build APK aur AAB
+        env:
+          AGORA_APP_ID: ${{ secrets.AGORA_APP_ID }}
+        run: |
+          DEFINE=""
+          if [ -n "$AGORA_APP_ID" ]; then
+            DEFINE="--dart-define=AGORA_APP_ID=$AGORA_APP_ID"
+          fi
+          flutter build apk --release --no-shrink $DEFINE
+          flutter build appbundle --release $DEFINE
+
+      - name: APK upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-test-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: AAB upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-test-aab
+          path: build/app/outputs/bundle/release/app-release.aab
