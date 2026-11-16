@@ -35,15 +35,16 @@ with open(path, "w", encoding="utf-8") as f:
 print("Manifest patched")
 
 # --- compileSdk fix -------------------------------------------------------
-# agora_rtc_engine is compiled against android-31, but its AndroidX
-# dependencies require compileSdk 33/34+. A Gradle init script raises the
-# compileSdk of every plugin/library module (not the app) before the build.
+# Plugins (agora_rtc_engine, iris_method_channel, permission_handler_android)
+# and their AndroidX dependencies require compileSdk 37, while the app module
+# and old plugins default to 36 / 31. A Gradle init script forces compileSdk 37
+# on EVERY module (app + all plugins) right after it is evaluated.
 COMPILE_SDK = 37
 init_dir = os.path.join(os.path.expanduser("~"), ".gradle", "init.d")
 os.makedirs(init_dir, exist_ok=True)
 init_script = f"""allprojects {{
     afterEvaluate {{ p ->
-        if (p.name != 'app' && p.extensions.findByName('android') != null) {{
+        if (p.extensions.findByName('android') != null) {{
             p.extensions.android.compileSdkVersion {COMPILE_SDK}
         }}
     }}
@@ -51,4 +52,4 @@ init_script = f"""allprojects {{
 """
 with open(os.path.join(init_dir, "compile-sdk.gradle"), "w", encoding="utf-8") as f:
     f.write(init_script)
-print(f"Gradle init script written: plugin modules -> compileSdk {COMPILE_SDK}")
+print(f"Gradle init script written: all modules -> compileSdk {COMPILE_SDK}")
