@@ -5,7 +5,14 @@ import 'config.dart';
 
 class CallScreen extends StatefulWidget {
   final String gender;
-  const CallScreen({super.key, required this.gender});
+  final String channel;
+  final String token;
+  const CallScreen({
+    super.key,
+    required this.gender,
+    required this.channel,
+    this.token = '',
+  });
 
   @override
   State<CallScreen> createState() => _CallScreenState();
@@ -83,9 +90,17 @@ class _CallScreenState extends State<CallScreen> {
           String hint = '';
           if (err == ErrorCodeType.errInvalidToken ||
               err == ErrorCodeType.errTokenExpired) {
-            hint = ' (Agora project me App Certificate OFF karo)';
+            hint = '\n\nToken galat ya expire hai. Call kaat kar back jao aur '
+                'Agora console se naya Temp Token (isi Channel name ke liye) '
+                'home screen par paste karo.';
           }
           setState(() => _status = 'Error: $err $msg$hint');
+        },
+        onTokenPrivilegeWillExpire:
+            (RtcConnection connection, String token) {
+          if (!mounted) return;
+          setState(() => _status =
+              'Token jaldi expire hoga. Naya token paste karke dobara join karo.');
         },
       ));
 
@@ -93,8 +108,8 @@ class _CallScreenState extends State<CallScreen> {
       await engine.startPreview();
 
       await engine.joinChannel(
-        token: '',
-        channelId: channelName,
+        token: widget.token,
+        channelId: widget.channel,
         uid: 0,
         options: const ChannelMediaOptions(
           clientRoleType: ClientRoleType.clientRoleBroadcaster,
@@ -150,12 +165,12 @@ class _CallScreenState extends State<CallScreen> {
         controller: VideoViewController.remote(
           rtcEngine: engine,
           canvas: VideoCanvas(uid: _remoteUid),
-          connection: const RtcConnection(channelId: channelName),
+          connection: RtcConnection(channelId: widget.channel),
         ),
       );
     }
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,

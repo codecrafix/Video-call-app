@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'call_screen.dart';
+import 'config.dart';
 
 void main() => runApp(const MyApp());
 
@@ -20,13 +21,43 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  void _start(BuildContext context, String gender) {
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _channelCtrl =
+      TextEditingController(text: defaultChannelName);
+  final TextEditingController _tokenCtrl =
+      TextEditingController(text: defaultAgoraToken);
+
+  @override
+  void dispose() {
+    _channelCtrl.dispose();
+    _tokenCtrl.dispose();
+    super.dispose();
+  }
+
+  void _start(String gender) {
+    final channel = _channelCtrl.text.trim();
+    if (channel.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Channel name khali nahi ho sakta')),
+      );
+      return;
+    }
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => CallScreen(gender: gender)),
+      MaterialPageRoute(
+        builder: (_) => CallScreen(
+          gender: gender,
+          channel: channel,
+          token: _tokenCtrl.text.trim(),
+        ),
+      ),
     );
   }
 
@@ -34,43 +65,61 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Icon(Icons.video_call, size: 80, color: Colors.pink),
-              const SizedBox(height: 16),
-              const Text(
-                'Video Call Test',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Apna option chuno aur video call start karo',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 40),
-              SizedBox(
-                height: 64,
-                child: FilledButton.icon(
-                  onPressed: () => _start(context, 'Male'),
-                  icon: const Icon(Icons.male),
-                  label: const Text('Male', style: TextStyle(fontSize: 20)),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Icon(Icons.video_call, size: 80, color: Colors.pink),
+                const SizedBox(height: 16),
+                const Text(
+                  'Video Call Test',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 64,
-                child: FilledButton.icon(
-                  onPressed: () => _start(context, 'Female'),
-                  icon: const Icon(Icons.female),
-                  label: const Text('Female', style: TextStyle(fontSize: 20)),
+                const SizedBox(height: 8),
+                const Text(
+                  'Dono phone me same Channel name aur same Token rakho',
+                  textAlign: TextAlign.center,
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                TextField(
+                  controller: _channelCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Channel name',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _tokenCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Agora Token (Certificate ON ho to paste karo)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  height: 64,
+                  child: FilledButton.icon(
+                    onPressed: () => _start('Male'),
+                    icon: const Icon(Icons.male),
+                    label: const Text('Male', style: TextStyle(fontSize: 20)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 64,
+                  child: FilledButton.icon(
+                    onPressed: () => _start('Female'),
+                    icon: const Icon(Icons.female),
+                    label: const Text('Female', style: TextStyle(fontSize: 20)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
