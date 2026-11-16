@@ -1,3 +1,4 @@
+import os
 import re
 
 path = "android/app/src/main/AndroidManifest.xml"
@@ -32,3 +33,22 @@ xml = re.sub(r'android:label="[^"]*"', 'android:label="Video Test"', xml, count=
 with open(path, "w", encoding="utf-8") as f:
     f.write(xml)
 print("Manifest patched")
+
+# --- compileSdk fix -------------------------------------------------------
+# agora_rtc_engine is compiled against android-31, but its AndroidX
+# dependencies require compileSdk 33/34+. A Gradle init script raises the
+# compileSdk of every plugin/library module (not the app) before the build.
+COMPILE_SDK = 37
+init_dir = os.path.join(os.path.expanduser("~"), ".gradle", "init.d")
+os.makedirs(init_dir, exist_ok=True)
+init_script = f"""allprojects {{
+    afterEvaluate {{ p ->
+        if (p.name != 'app' && p.extensions.findByName('android') != null) {{
+            p.extensions.android.compileSdkVersion {COMPILE_SDK}
+        }}
+    }}
+}}
+"""
+with open(os.path.join(init_dir, "compile-sdk.gradle"), "w", encoding="utf-8") as f:
+    f.write(init_script)
+print(f"Gradle init script written: plugin modules -> compileSdk {COMPILE_SDK}")
